@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register Face</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <nav class="bg-blue-600 p-4 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <!-- ✅ Brand Logo / Title -->
+            <h1 class="text-white text-2xl font-bold">📦 Warehouse Dashboard</h1>
+    
+            <!-- ✅ Navigation Links -->
+            <div class="flex space-x-4">
+                <a href="{{ url_for('dashboard') }}" class="bg-gray-500 text-white px-5 py-2 rounded-md hover:bg-gray-600 transition flex items-center gap-2">
+                    🏠 Home
+                </a> 
+                <a href="{{ url_for('live_detection') }}" class="bg-green-500 text-white px-5 py-2 rounded-md hover:bg-green-600 transition">
+                    🎥 Live Detection
+                </a>
+                <a href="{{ url_for('detection_log') }}" class="bg-purple-500 text-white px-5 py-2 rounded-md hover:bg-purple-600 transition">
+                    📜 Detection Log
+                </a>
+                <a href="{{ url_for('register_face') }}" class="bg-yellow-500 text-white px-5 py-2 rounded-md hover:bg-yellow-600 transition">
+                    🧑‍💻 Register Face
+                </a>
+                <a href="{{ url_for('manage_faces') }}" class="bg-blue-500 text-white px-5 py-2 rounded-md hover:bg-blue-600 transition">
+                    🗂️ Manage Faces
+                </a>
+                <a href="{{ url_for('logout') }}" class="bg-red-500 text-white px-5 py-2 rounded-md hover:bg-red-600 transition">
+                    🚪 Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+    <div class="container mx-auto mt-12 p-6 bg-white rounded-lg shadow-md w-full max-w-4xl">
+        <h1 class="text-3xl font-bold text-gray-800">Register Your Face</h1>
+
+        <form id="registerForm" action="{{ url_for('register_face') }}" method="POST" enctype="multipart/form-data" class="mt-6 bg-white p-6 rounded-lg shadow-md">
+            <label class="block text-gray-600 text-sm font-medium">Enter Name:</label>
+            <input type="text" name="name" id="name" required class="w-full px-4 py-2 mt-2 border rounded-lg">
+
+            <label class="block text-gray-600 text-sm font-medium mt-4">Upload Face Image:</label>
+            <input type="file" name="face_image" id="face_image" accept="image/*" class="w-full px-4 py-2 mt-2 border rounded-lg">
+
+            <!-- Live Camera Feed -->
+            <div class="mt-4 flex flex-col items-center">
+                <video id="camera" autoplay class="border-2 border-gray-300 rounded-lg w-[400px] h-[300px]"></video>
+                <canvas id="canvas" class="hidden"></canvas>
+            </div>
+
+            <!-- Camera Capture Buttons -->
+            <div class="mt-4 flex gap-4">
+                <button type="button" onclick="captureImage()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                    📸 Capture Face
+                </button>
+                <button type="button" onclick="retakeImage()" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">
+                    🔄 Retake
+                </button>
+            </div>
+
+            <!-- Hidden Input for Captured Image -->
+            <input type="hidden" name="captured_image" id="captured_image">
+
+            <button type="submit" class="w-full mt-6 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">Register Face</button>
+        </form>
+    </div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="fixed top-4 right-4 z-50">
+                {% for category, message in messages %}
+                <div class="bg-{{ 'red-500' if category == 'error' else 'green-500' }} text-white px-4 py-2 rounded-md shadow-md mt-2">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    <br/><br/>
+    <script>
+        let video = document.getElementById("camera");
+        let canvas = document.getElementById("canvas");
+        let capturedImageInput = document.getElementById("captured_image");
+        let faceImageInput = document.getElementById("face_image");
+
+        // ✅ Start Camera
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then((stream) => {
+                video.srcObject = stream;
+            })
+            .catch((err) => {
+                console.error("Error accessing webcam:", err);
+            });
+
+        function captureImage() {
+            let ctx = canvas.getContext("2d");
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            let imageData = canvas.toDataURL("image/jpeg");
+            capturedImageInput.value = imageData;
+
+            video.classList.add("hidden");
+            canvas.classList.remove("hidden");
+
+            // ✅ Remove file upload option once image is captured
+            faceImageInput.value = "";
+        }
+
+        function retakeImage() {
+            video.classList.remove("hidden");
+            canvas.classList.add("hidden");
+            capturedImageInput.value = "";
+        }
+    </script>
+
+</body>
+</html>

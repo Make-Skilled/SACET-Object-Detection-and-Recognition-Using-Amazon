@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Product - Warehouse System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+
+    <!-- Navbar -->
+    <nav class="bg-blue-600 p-4 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-white text-2xl font-bold">Warehouse System</h1>
+            <div>
+                <a href="{{ url_for('dashboard') }}" class="bg-white text-blue-600 px-4 py-2 rounded-md hover:bg-gray-200">Dashboard</a>
+                <a href="{{ url_for('logout') }}" class="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 ml-2">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Edit Product Form -->
+    <div class="container mx-auto mt-10 p-6 bg-white rounded-lg shadow-md w-full max-w-lg">
+        <h2 class="text-3xl font-bold text-gray-800 text-center">Edit Product</h2>
+        <form action="{{ url_for('edit_product', product_id=product.id) }}" method="POST" enctype="multipart/form-data" class="mt-6 bg-white p-6 rounded-lg shadow-md w-full max-w-lg">
+
+            <!-- Barcode Field (Read-only) -->
+            <div class="mt-4">
+                <label class="block text-gray-600 text-sm font-medium">Barcode</label>
+                <input type="text" name="barcode" value="{{ product.barcode }}" readonly 
+                       class="w-full px-4 py-2 mt-1 border rounded-lg bg-gray-200">
+            </div>
+    
+            <!-- Category Dropdown -->
+            <div class="mt-4">
+                <label class="block text-gray-600 text-sm font-medium">Category</label>
+                <select name="category" required class="w-full px-4 py-2 mt-1 border rounded-lg focus:ring focus:ring-blue-300">
+                    <option value="Electronics" {% if product.category == "Electronics" %}selected{% endif %}>Electronics</option>
+                    <option value="Furniture" {% if product.category == "Furniture" %}selected{% endif %}>Furniture</option>
+                    <option value="Clothing" {% if product.category == "Clothing" %}selected{% endif %}>Clothing</option>
+                    <option value="Food" {% if product.category == "Food" %}selected{% endif %}>Food</option>
+                    <option value="Other" {% if product.category == "Other" %}selected{% endif %}>Other</option>
+                </select>
+            </div>
+    
+            <!-- Product Name -->
+            <div class="mt-4">
+                <label class="block text-gray-600 text-sm font-medium">Product Name</label>
+                <input type="text" name="name" value="{{ product.name }}" required class="w-full px-4 py-2 mt-1 border rounded-lg focus:ring focus:ring-blue-300">
+            </div>
+    
+            <!-- Product Description -->
+            <div class="mt-4">
+                <label class="block text-gray-600 text-sm font-medium">Description</label>
+                <textarea name="description" required class="w-full px-4 py-2 mt-1 border rounded-lg focus:ring focus:ring-blue-300">{{ product.description }}</textarea>
+            </div>
+    
+            <!-- Quantity & Price -->
+            <div class="flex mt-4 gap-4">
+                <div class="w-1/2">
+                    <label class="block text-gray-600 text-sm font-medium">Quantity</label>
+                    <input type="number" name="quantity" value="{{ product.stock_quantity }}" required min="1" class="w-full px-4 py-2 border rounded-lg">
+                </div>
+                <div class="w-1/2">
+                    <label class="block text-gray-600 text-sm font-medium">Price (₹)</label>
+                    <input type="number" name="price" value="{{ product.price }}" required step="0.01" class="w-full px-4 py-2 border rounded-lg">
+                </div>
+            </div>
+    
+            <!-- Current Product Image -->
+            <div class="mt-4">
+                <label class="block text-gray-600 text-sm font-medium">Current Product Image</label>
+                <img src="{{ url_for('static', filename=product.image_url) }}" alt="Product Image" class="border-2 border-gray-300 rounded-lg w-96 h-64 mt-2">
+            </div>
+    
+            <!-- File Upload -->
+            <div class="mt-4">
+                <label class="block text-gray-600 text-sm font-medium">Upload New Product Image</label>
+                <input type="file" id="fileUpload" name="product_image" accept="image/*" class="w-full px-4 py-2 mt-1 border rounded-lg focus:ring focus:ring-blue-300">
+            </div>
+    
+            <!-- Live Camera Preview -->
+            <div class="mt-4">
+                <label class="block text-gray-600 text-sm font-medium">Or Capture New Product Image</label>
+                <video id="camera" autoplay class="border-2 border-gray-300 rounded-lg w-96 h-64"></video>
+                <canvas id="canvas" class="hidden"></canvas>
+                <img id="capturedImage" class="hidden border-2 border-gray-300 rounded-lg w-96 h-64 mt-4">
+            </div>
+    
+            <!-- Buttons for Capture & Upload -->
+            <div class="mt-4 flex gap-4">
+                <button type="button" onclick="captureImage()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                    📸 Capture Image
+                </button>
+                <button type="button" onclick="recaptureImage()" id="recaptureBtn" class="hidden bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600">
+                    🔄 Recapture
+                </button>
+            </div>
+    
+            <!-- Hidden Input to Store Captured Image -->
+            <input type="hidden" id="imageData" name="imageData">
+    
+            <!-- Submit Button -->
+            <button type="submit" class="w-full mt-6 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">Update Product</button>
+        </form>
+    </div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="fixed top-4 right-4 z-50">
+                {% for category, message in messages %}
+                <div class="bg-{{ 'red-500' if category == 'error' else 'green-500' }} text-white px-4 py-2 rounded-md shadow-md mt-2">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    <script>
+        // ✅ Start Camera
+        const video = document.getElementById("camera");
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+            .then((stream) => {
+                video.srcObject = stream;
+            })
+            .catch((err) => {
+                console.error("Error accessing webcam:", err);
+            });
+
+        function captureImage() {
+            const canvas = document.getElementById("canvas");
+            const ctx = canvas.getContext("2d");
+
+            // Set canvas size to match video
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            // Capture Image from Webcam
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Convert Image to Base64
+            const imageData = canvas.toDataURL("image/png");
+            document.getElementById("imageData").value = imageData;
+
+            // Show captured image
+            const capturedImage = document.getElementById("capturedImage");
+            capturedImage.src = imageData;
+            capturedImage.classList.remove("hidden");
+
+            // Hide video preview
+            video.classList.add("hidden");
+
+            // Show recapture button
+            document.getElementById("recaptureBtn").classList.remove("hidden");
+        }
+
+        function recaptureImage() {
+            // Show video again
+            video.classList.remove("hidden");
+
+            // Hide captured image
+            document.getElementById("capturedImage").classList.add("hidden");
+
+            // Hide recapture button
+            document.getElementById("recaptureBtn").classList.add("hidden");
+        }
+    </script>
+
+</body>
+</html>

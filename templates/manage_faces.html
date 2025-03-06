@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Faces</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+
+    <nav class="bg-blue-600 p-4 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <!-- ✅ Brand Logo / Title -->
+            <h1 class="text-white text-2xl font-bold">📦 Warehouse Dashboard</h1>
+    
+            <!-- ✅ Navigation Links -->
+            <div class="flex space-x-4">
+                <a href="{{ url_for('dashboard') }}" class="bg-gray-500 text-white px-5 py-2 rounded-md hover:bg-gray-600 transition flex items-center gap-2">
+                    🏠 Home
+                </a>                
+                <a href="{{ url_for('live_detection') }}" class="bg-green-500 text-white px-5 py-2 rounded-md hover:bg-green-600 transition">
+                    🎥 Live Detection
+                </a>
+                <a href="{{ url_for('detection_log') }}" class="bg-purple-500 text-white px-5 py-2 rounded-md hover:bg-purple-600 transition">
+                    📜 Detection Log
+                </a>
+                <a href="{{ url_for('register_face') }}" class="bg-yellow-500 text-white px-5 py-2 rounded-md hover:bg-yellow-600 transition">
+                    🧑‍💻 Register Face
+                </a>
+                <a href="{{ url_for('manage_faces') }}" class="bg-blue-500 text-white px-5 py-2 rounded-md hover:bg-blue-600 transition">
+                    🗂️ Manage Faces
+                </a>
+                <a href="{{ url_for('logout') }}" class="bg-red-500 text-white px-5 py-2 rounded-md hover:bg-red-600 transition">
+                    🚪 Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+    <div class="container mx-auto mt-12 p-6 bg-white rounded-lg shadow-md w-full max-w-4xl">
+        <h1 class="text-3xl font-bold text-gray-800 mt-6">🧑‍💻 Manage Registered Faces</h1>
+
+        <!-- Faces Table -->
+        <div class="w-full max-w-4xl mt-6 bg-white shadow-md rounded-lg overflow-hidden">
+            <table class="w-full">
+                <thead class="bg-blue-500 text-white">
+                    <tr>
+                        <th class="px-6 py-3">Name</th>
+                        <th class="px-6 py-3">Face Image</th>
+                        <th class="px-6 py-3">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-gray-50">
+                    {% for face in faces %}
+                    <tr class="border-b hover:bg-gray-200">
+                        <td class="px-6 py-3">{{ face.name }}</td>
+                        <td class="px-6 py-3">
+                            <img src="{{ url_for('static', filename=face.image_path.split('static/')[1]) }}" 
+                                alt="Face Image" class="w-16 h-16 rounded-full object-cover border">
+                        </td>
+                        <td class="px-6 py-3">
+                            <form action="{{ url_for('delete_face', face_id=face.id) }}" method="POST">
+                                <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">
+                                    🗑️ Delete
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="fixed top-4 right-4 z-50">
+                {% for category, message in messages %}
+                <div class="bg-{{ 'red-500' if category == 'error' else 'green-500' }} text-white px-4 py-2 rounded-md shadow-md mt-2">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+</body>
+</html>

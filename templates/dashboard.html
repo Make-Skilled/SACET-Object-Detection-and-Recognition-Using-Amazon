@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Warehouse Stock System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+
+    <!-- Navbar -->
+    <nav class="bg-blue-600 p-4 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <!-- ✅ Brand Logo / Title -->
+            <h1 class="text-white text-2xl font-bold">📦 Warehouse Dashboard</h1>
+    
+            <!-- ✅ Navigation Links -->
+            <div class="flex space-x-4">
+                <a href="{{ url_for('dashboard') }}" class="bg-gray-500 text-white px-5 py-2 rounded-md hover:bg-gray-600 transition flex items-center gap-2">
+                    🏠 Home
+                </a> 
+                <a href="{{ url_for('live_detection') }}" class="bg-green-500 text-white px-5 py-2 rounded-md hover:bg-green-600 transition">
+                    🎥 Live Detection
+                </a>
+                <a href="{{ url_for('detection_log') }}" class="bg-purple-500 text-white px-5 py-2 rounded-md hover:bg-purple-600 transition">
+                    📜 Detection Log
+                </a>
+                <a href="{{ url_for('register_face') }}" class="bg-yellow-500 text-white px-5 py-2 rounded-md hover:bg-yellow-600 transition">
+                    🧑‍💻 Register Face
+                </a>
+                <a href="{{ url_for('manage_faces') }}" class="bg-blue-500 text-white px-5 py-2 rounded-md hover:bg-blue-600 transition">
+                    🗂️ Manage Faces
+                </a>
+                <a href="{{ url_for('logout') }}" class="bg-red-500 text-white px-5 py-2 rounded-md hover:bg-red-600 transition">
+                    🚪 Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+    
+
+    <div class="container mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-3xl font-bold text-gray-800">Inventory Stock</h2>
+            <a href="{{ url_for('scan_barcode') }}" class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600">📸 Scan Barcode</a>
+            <a href="{{ url_for('add_product') }}" class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600">+ Add Product</a>
+        </div>
+
+        <!-- Sort & Filter Section -->
+        <form method="GET" action="{{ url_for('dashboard') }}" class="mb-4 flex space-x-4">
+            <input type="text" name="search" placeholder="Search product..." value="{{ request.args.get('search', '') }}" 
+                class="w-full px-4 py-2 border rounded-lg focus:ring focus:ring-blue-300">
+            
+            <select name="category" class="px-4 py-2 border rounded-lg focus:ring focus:ring-blue-300">
+                <option value="">All Categories</option>
+                <option value="Electronics" {% if request.args.get('category') == 'Electronics' %}selected{% endif %}>Electronics</option>
+                <option value="Furniture" {% if request.args.get('category') == 'Furniture' %}selected{% endif %}>Furniture</option>
+                <option value="Clothing" {% if request.args.get('category') == 'Clothing' %}selected{% endif %}>Clothing</option>
+                <option value="Food" {% if request.args.get('category') == 'Food' %}selected{% endif %}>Food</option>
+                <option value="Other" {% if request.args.get('category') == 'Other' %}selected{% endif %}>Other</option>
+            </select>
+
+            <!-- Sorting Dropdown -->
+            <select name="sort" class="px-4 py-2 border rounded-lg focus:ring focus:ring-blue-300">
+                <option value="newest" {% if request.args.get('sort') == 'newest' %}selected{% endif %}>Newest</option>
+                <option value="oldest" {% if request.args.get('sort') == 'oldest' %}selected{% endif %}>Oldest</option>
+                <option value="price_asc" {% if request.args.get('sort') == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
+                <option value="price_desc" {% if request.args.get('sort') == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
+                <option value="stock_asc" {% if request.args.get('sort') == 'stock_asc' %}selected{% endif %}>Stock: Low to High</option>
+                <option value="stock_desc" {% if request.args.get('sort') == 'stock_desc' %}selected{% endif %}>Stock: High to Low</option>
+            </select>
+
+            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Apply</button>
+        </form>
+
+
+        <!-- Inventory Table -->
+        <table class="w-full border-collapse border border-gray-300">
+            <thead>
+                <tr class="bg-gray-200">
+                    <th class="border px-4 py-2 text-left">Image</th>
+                    <th class="border px-4 py-2 text-left">Category</th>
+                    <th class="border px-4 py-2 text-left">Product Name</th>
+                    <th class="border px-4 py-2 text-left">Description</th>
+                    <th class="border px-4 py-2 text-left">Stock</th>
+                    <th class="border px-4 py-2 text-left">Barcode</th>
+                    <th class="border px-4 py-2 text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in products.items %}
+                <tr class="border">
+                    <td class="border px-4 py-2">
+                        <img src="/static/{{ product.image_url }}" 
+                             alt="{{ product.name }}" class="w-16 h-16 object-cover rounded-md">
+                    </td>
+                    <td class="border px-4 py-2">{{ product.category }}</td>
+                    <td class="border px-4 py-2">{{ product.name }}</td>
+                    <td class="border px-4 py-2">{{ product.description }}</td>
+                    <td class="border px-4 py-2">{{ product.stock_quantity }}</td>
+                    <td class="border px-4 py-2 text-gray-600">
+                        {% if product.barcode %}
+                            {{ product.barcode }}
+                        {% else %}
+                            No barcode detected
+                        {% endif %}
+                    </td>
+                    <td class="border px-4 py-2 text-center">
+                        <a href="{{ url_for('edit_product', product_id=product.id) }}" class="bg-yellow-500 text-white px-3 py-1 rounded-md hover:bg-yellow-600">Edit</a>
+                        <a href="{{ url_for('delete_product', product_id=product.id) }}" class="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 ml-2" onclick="return confirm('Are you sure?')">Delete</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center text-gray-600 py-4">No products found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+                       
+        </table>
+
+        <!-- Pagination Controls -->
+        <div class="flex justify-center mt-6">
+            {% if products.has_prev %}
+                <a href="{{ url_for('dashboard', page=products.prev_num, search=request.args.get('search', ''), category=request.args.get('category', '')) }}" class="px-4 py-2 mx-1 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400">Previous</a>
+            {% endif %}
+            
+            {% for num in products.iter_pages() %}
+                {% if num %}
+                    <a href="{{ url_for('dashboard', page=num, search=request.args.get('search', ''), category=request.args.get('category', '')) }}" class="px-4 py-2 mx-1 {% if num == products.page %}bg-blue-600 text-white{% else %}bg-gray-300 text-gray-800{% endif %} rounded-lg hover:bg-gray-400">{{ num }}</a>
+                {% else %}
+                    <span class="px-4 py-2 mx-1">...</span>
+                {% endif %}
+            {% endfor %}
+            
+            {% if products.has_next %}
+                <a href="{{ url_for('dashboard', page=products.next_num, search=request.args.get('search', ''), category=request.args.get('category', '')) }}" class="px-4 py-2 mx-1 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400">Next</a>
+            {% endif %}
+        </div>
+    </div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="fixed top-4 right-4 z-50">
+                {% for category, message in messages %}
+                <div class="bg-{{ 'red-500' if category == 'error' else 'green-500' }} text-white px-4 py-2 rounded-md shadow-md mt-2">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+</body>
+</html>

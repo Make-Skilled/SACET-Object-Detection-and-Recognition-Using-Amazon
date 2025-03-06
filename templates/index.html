@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warehouse Stock Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <!-- Navbar -->
+    <nav class="bg-blue-600 p-4 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-white text-2xl font-bold">Warehouse Stock System</h1>
+            <div>
+                <a href="{{ url_for('login') }}" class="bg-white text-blue-600 px-4 py-2 rounded-md hover:bg-gray-200">Login</a>
+                <a href="{{ url_for('signup') }}" class="bg-gray-200 text-blue-600 px-4 py-2 rounded-md hover:bg-gray-300 ml-2">Sign Up</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="text-center py-20 px-5">
+        <h2 class="text-4xl font-bold text-gray-800">Automate Your Warehouse with AI-Powered Stock Tracking</h2>
+        <p class="text-gray-600 mt-4 text-lg">Detect & update stock levels in real-time using AI-powered object detection.</p>
+        <a href="{{ url_for('dashboard') }}" class="mt-6 inline-block bg-blue-600 text-white px-6 py-3 rounded-md text-lg font-medium hover:bg-blue-700">Get Started</a>
+    </section>
+
+    <!-- Features Section -->
+    <section class="bg-white py-16">
+        <div class="container mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+            <div class="p-6 border rounded-md shadow-md">
+                <h3 class="text-xl font-semibold text-gray-800">Real-Time Object Detection</h3>
+                <p class="text-gray-600 mt-2">Detect warehouse items instantly using YOLOv5 AI.</p>
+            </div>
+            <div class="p-6 border rounded-md shadow-md">
+                <h3 class="text-xl font-semibold text-gray-800">Automated Stock Updates</h3>
+                <p class="text-gray-600 mt-2">Automatically update inventory when new items are detected.</p>
+            </div>
+            <div class="p-6 border rounded-md shadow-md">
+                <h3 class="text-xl font-semibold text-gray-800">Low Stock Alerts</h3>
+                <p class="text-gray-600 mt-2">Receive email notifications when stock levels are low.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-6 text-center mt-10">
+        <p>&copy; 2025 Warehouse Stock System. All rights reserved.</p>
+    </footer>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="fixed top-4 right-4 z-50">
+                {% for category, message in messages %}
+                <div class="bg-{{ 'red-500' if category == 'error' else 'green-500' }} text-white px-4 py-2 rounded-md shadow-md mt-2">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+</body>
+</html>
