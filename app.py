@@ -10,6 +10,11 @@ app = Flask(__name__)
 app.secret_key = "supersecretkey"
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
 app.config["UPLOAD_FOLDER"] = os.path.join("static", "uploads")
+MEGABYTE = (2 ** 10) ** 2
+app.config['MAX_CONTENT_LENGTH'] = None
+# Max number of fields in a multi part form (I don't send more than one file)
+# app.config['MAX_FORM_PARTS'] = ...
+app.config['MAX_FORM_MEMORY_SIZE'] = 50 * MEGABYTE
 
 UPLOAD_FOLDER = "static/uploads/"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
