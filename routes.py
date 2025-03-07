@@ -29,6 +29,11 @@ rekognition_client = boto3.client("rekognition", region_name="us-east-1")  # Cha
 device = select_device("")
 yolo_model = DetectMultiBackend("yolov5s.pt", device=device)  # Load YOLOv5 model
 
+# Ensure detected_faces directory exists
+DETECTED_FACES_DIR = "static/detected_faces"
+if not os.path.exists(DETECTED_FACES_DIR):
+    os.makedirs(DETECTED_FACES_DIR)
+
 COLORS = {}
 def get_color(cls_id):
     if cls_id not in COLORS:
@@ -511,6 +516,7 @@ def detect_objects():
         # ✅ YOLOv5 Object Detection
         img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         img_tensor = torch.from_numpy(img_rgb).float().permute(2, 0, 1).unsqueeze(0) / 255.0  # Normalize
+        img_tensor = img_tensor.to(device)  # Move tensor to same device as model
         
         with torch.no_grad():
             pred = yolo_model(img_tensor, augment=False)
@@ -536,32 +542,31 @@ def detect_objects():
                 cv2.rectangle(img, (int(x1), int(y1)), (int(x2), int(y2)), color, 2)
                 cv2.putText(img, f"{object_name} {conf:.2f}", (int(x1), int(y1) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
-                # ✅ Process Faces If Object is "Person"
+                # ✅ Always Log Object Detection to Database
+                db.session.add(Detection(object_name=object_name, confidence=conf))
+                detected_objects.append(object_name)
+
+                # ✅ Process Faces If Object is "Person" - Only during cooling period
                 if object_name == "person":
                     face_img = img[int(y1):int(y2), int(x1):int(x2)]
-                    face_path = f"static/detected_faces/{datetime.datetime.utcnow().timestamp()}.jpg"
+                    face_path = os.path.join(DETECTED_FACES_DIR, f"{datetime.datetime.utcnow().timestamp()}.jpg")
                     cv2.imwrite(face_path, face_img)
 
-                    # ✅ Only Send Alert & Store Detection if Cooling Period Passed
+                    # ✅ Check Cooling Period for Face Comparison
                     last_alert_time = db.session.query(db.func.max(Detection.timestamp)).filter_by(object_name="UNKNOWN_PERSON").scalar()
                     if not last_alert_time or (current_time - last_alert_time).total_seconds() >= COOLING_PERIOD:
                         if not compare_faces(registered_faces, face_path):
                             send_alert_email(face_path)  # 🚨 Send alert if face is unknown
                             db.session.add(Detection(object_name="UNKNOWN_PERSON", confidence=1.0))
 
-                # ✅ Log Object Detection Only If Cooling Period Passed
-                last_detection_time = db.session.query(db.func.max(Detection.timestamp)).filter_by(object_name=object_name).scalar()
-                if not last_detection_time or (current_time - last_detection_time).total_seconds() >= COOLING_PERIOD:
-                    db.session.add(Detection(object_name=object_name, confidence=conf))
-                    detected_objects.append(object_name)
-
         db.session.commit()
 
-        # ✅ Ensure Processed Image is Always Returned with Bounding Boxes
+        # ✅ Always Return Processed Image with Bounding Boxes
         _, buffer = cv2.imencode(".jpg", img)
         return Response(buffer.tobytes(), mimetype="image/jpeg")
 
     except Exception as e:
+        print(f"Error in detect_objects: {str(e)}")  # Add logging
         return jsonify({"error": str(e)}), 500
     
 # ✅ Route to Display Stored Detections
